@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Atmos — Weather Intelligence</title>
+<link rel="stylesheet" href="{{url_for('static',filename='style.css')}}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="noise"></div>
+<nav>
+  <div class="logo"><div class="logo-mark">A</div><div>ATMOS<span>AI</span></div></div>
+  <div class="nav-links"><a class="active">Dashboard</a><a>Model</a><a>Analytics</a></div>
+  <div class="nav-right"><span class="live-dot"></span> SYSTEM ONLINE <div class="avatar">MS</div></div>
+</nav>
+
+<main>
+<section class="top">
+  <div>
+    <p class="overline">WEATHER INTELLIGENCE PLATFORM</p>
+    <h1>See what the<br><em>sky is thinking.</em></h1>
+    <p class="lead">A machine-learning weather prediction system trained on historical atmospheric patterns.</p>
+  </div>
+  <div class="hero-weather">
+    <div class="weather-ring"><div class="sun">☀</div></div>
+    <div><span class="mini-label">MODEL STATUS</span><strong>READY</strong><small>Random Forest · 150 trees</small></div>
+  </div>
+</section>
+
+<section class="workspace">
+  <div class="card predictor">
+    <div class="card-title"><div><span class="number">01</span><div><p>INPUT CONDITIONS</p><h2>Atmospheric snapshot</h2></div></div><span class="badge">LIVE INPUT</span></div>
+    <div class="fields">
+      <label><span>Temperature <b>°C</b></span><div class="field"><span>🌡</span><input id="temperature" value="30" type="number" step=".1"></div></label>
+      <label><span>Humidity <b>%</b></span><div class="field"><span>◌</span><input id="humidity" value="70" type="number" min="0" max="100"></div></label>
+      <label><span>Wind speed <b>km/h</b></span><div class="field"><span>≋</span><input id="wind" value="12" type="number" min="0" step=".1"></div></label>
+      <label><span>Rainfall <b>mm</b></span><div class="field"><span>◒</span><input id="rainfall" value="5" type="number" min="0" step=".1"></div></label>
+    </div>
+    <button onclick="predict()" id="btn">RUN PREDICTION <span>↗</span></button>
+    <p class="hint">Four selected weather features → trained Random Forest → predicted condition</p>
+  </div>
+
+  <div class="card prediction">
+    <span class="number">02</span><p class="card-label">MODEL OUTPUT</p>
+    <div id="icon" class="big-icon">⛅</div>
+    <div id="result" class="result">Partly Cloudy</div>
+    <div class="confidence"><span id="conf">Ready for prediction</span><div><i id="confbar"></i></div></div>
+    <div class="output-details"><span>CLASSIFICATION</span><strong>Weather condition</strong><span>MODEL</span><strong>Random Forest</strong></div>
+  </div>
+</section>
+
+<section class="quick">
+ <div><small>MODEL</small><strong>Random Forest</strong><p>Ensemble classifier</p></div>
+ <div><small>FEATURES</small><strong>04</strong><p>Atmospheric inputs</p></div>
+ <div><small>DATA SPLIT</small><strong>80 / 20</strong><p>Train / test</p></div>
+ <div><small>DATASET</small><strong>{{metrics.samples}}</strong><p>{{metrics.source}}</p></div>
+</section>
+
+<section class="analytics card">
+ <div class="analytics-head"><div><span class="number">03</span><p class="card-label">MODEL ANALYTICS</p><h2>Performance overview</h2></div><div class="accuracy">{{metrics.accuracy}}% <small>accuracy</small></div></div>
+ <div class="analytics-body">
+   <div class="chart-wrap"><canvas id="chart"></canvas></div>
+   <div class="metric-list">
+    <div><span>Accuracy</span><strong>{{metrics.accuracy}}%</strong><i style="width:{{metrics.accuracy}}%"></i></div>
+    <div><span>Precision</span><strong>{{metrics.precision}}%</strong><i style="width:{{metrics.precision}}%"></i></div>
+    <div><span>Recall</span><strong>{{metrics.recall}}%</strong><i style="width:{{metrics.recall}}%"></i></div>
+    <div><span>F1 Score</span><strong>{{metrics.f1}}%</strong><i style="width:{{metrics.f1}}%"></i></div>
+   </div>
+ </div>
+</section>
+
+<section class="pipeline">
+ <div><span>01</span><strong>Historical data</strong><small>CSV / Excel</small></div><b>→</b>
+ <div><span>02</span><strong>Preprocessing</strong><small>Clean + select</small></div><b>→</b>
+ <div><span>03</span><strong>Random Forest</strong><small>150 trees</small></div><b>→</b>
+ <div><span>04</span><strong>Prediction</strong><small>User interface</small></div>
+</section>
+
+<footer><span>ATMOS AI · WEATHER PREDICTION PBL</span><span>Python · Flask · Pandas · Scikit-learn</span></footer>
+</main>
+<script>
+async function predict(){
+ const btn=document.getElementById('btn'); btn.disabled=true; btn.innerHTML='ANALYZING ATMOSPHERE <span>◌</span>';
+ try{
+  const r=await fetch('/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+   temperature:temperature.value,humidity:humidity.value,wind:wind.value,rainfall:rainfall.value})});
+  const d=await r.json(); if(!r.ok) throw Error(d.error);
+  result.textContent=d.prediction; icon.textContent=d.icon; conf.textContent='Model confidence · '+d.confidence+'%'; confbar.style.width=d.confidence+'%';
+ }catch(e){conf.textContent=e.message}
+ btn.disabled=false; btn.innerHTML='RUN PREDICTION <span>↗</span>';
+}
+new Chart(document.getElementById('chart'),{
+ type:'bar',data:{labels:['Accuracy','Precision','Recall','F1 Score'],datasets:[{data:[{{metrics.accuracy}},{{metrics.precision}},{{metrics.recall}},{{metrics.f1}}],borderRadius:8,backgroundColor:'#7c9cff'}]},
+ options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#71839b'}},x:{grid:{display:false},ticks:{color:'#71839b'}}}}
+});
+</script>
+</body>
+</html>
